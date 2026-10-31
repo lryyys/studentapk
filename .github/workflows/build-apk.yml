@@ -18,27 +18,15 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Auto-generate Gradle Wrapper and Build APK
+      - name: Upgrade Gradle Wrapper and Build APK
         run: |
-          # Ищем папку android в репозитории
+          # Ищем папку android или переходим туда, где есть настройки gradle
           if [ -d "android" ]; then
             cd android
-          else
-            # Если папки нет в корне, ищем где лежит build.gradle
-            BUILD_DIR=$(find . -name "build.gradle.kts" -o -name "build.gradle" | xargs dirname | head -n 1)
-            if [ -n "$BUILD_DIR" ]; then
-              cd "$BUILD_DIR"
-            fi
           fi
 
-          echo "Текущая рабочая директория: $(pwd)"
-
-          # Если gradlew отсутствует, устанавливаем gradle и генерируем оболочку автоматически
-          if [ ! -f "./gradlew" ]; then
-            echo "Файл gradlew не найден. Генерируем через gradle wrapper..."
-            sudo apt-get update && sudo apt-get install -y gradle
-            gradle wrapper
-          fi
+          echo "Обновляем версию Gradle до совместимой с Java 17..."
+          ./gradlew wrapper --gradle-version 7.6.3
 
           chmod +x gradlew
           ./gradlew assembleDebug --stacktrace
