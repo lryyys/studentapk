@@ -18,20 +18,27 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Find and build with Gradle
+      - name: Auto-generate Gradle Wrapper and Build APK
         run: |
-          # Ищем, где находится gradlew в репозитории
-          GRADLEW_PATH=$(find . -name "gradlew" -type f)
-          
-          if [ -z "$GRADLEW_PATH" ]; then
-            echo "Ошибка: файл gradlew не найден!"
-            exit 1
+          # Ищем папку android в репозитории
+          if [ -d "android" ]; then
+            cd android
+          else
+            # Если папки нет в корне, ищем где лежит build.gradle
+            BUILD_DIR=$(find . -name "build.gradle.kts" -o -name "build.gradle" | xargs dirname | head -n 1)
+            if [ -n "$BUILD_DIR" ]; then
+              cd "$BUILD_DIR"
+            fi
           fi
-          
-          # Получаем папку, где лежит gradlew
-          ANDROID_DIR=$(dirname "$GRADLEW_PATH")
-          echo "Найжена папка Android: $ANDROID_DIR"
-          
-          cd "$ANDROID_DIR"
+
+          echo "Текущая рабочая директория: $(pwd)"
+
+          # Если gradlew отсутствует, устанавливаем gradle и генерируем оболочку автоматически
+          if [ ! -f "./gradlew" ]; then
+            echo "Файл gradlew не найден. Генерируем через gradle wrapper..."
+            sudo apt-get update && sudo apt-get install -y gradle
+            gradle wrapper
+          fi
+
           chmod +x gradlew
           ./gradlew assembleDebug --stacktrace
