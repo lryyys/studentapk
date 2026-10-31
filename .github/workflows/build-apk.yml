@@ -18,12 +18,26 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3
-
       - name: Build APK with Gradle
-        working-directory: android
         run: |
+          # Автоматически находим папку, где лежит файл build.gradle.kts или build.gradle
+          ANDROID_DIR=$(find . -name "build.gradle.kts" -o -name "build.gradle" | xargs dirname | head -n 1)
+          
+          if [ -z "$ANDROID_DIR" ]; then
+            echo "Ошибка: Не найдены файлы сборки Android!"
+            exit 1
+          fi
+
+          echo "Найжена папка проекта: $ANDROID_DIR"
+          cd "$ANDROID_DIR"
+
+          # Если файла gradlew нет, генерируем его автоматически
+          if [ ! -f "./gradlew" ]; then
+            echo "Генерируем Gradle Wrapper..."
+            sudo apt-get update && sudo apt-get install -y gradle
+            gradle wrapper
+          fi
+
           chmod +x gradlew
           ./gradlew assembleDebug --stacktrace
 
@@ -32,6 +46,5 @@ jobs:
         with:
           name: app-debug
           path: |
-            android/app/build/outputs/apk/debug/app-debug.apk
-            app/build/outputs/apk/debug/app-debug.apk
+            **/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: ignore
