@@ -18,16 +18,12 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Upgrade Gradle Wrapper and Build APK
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Build APK with Gradle
+        working-directory: android
         run: |
-          # Ищем папку android или переходим туда, где есть настройки gradle
-          if [ -d "android" ]; then
-            cd android
-          fi
-
-          echo "Обновляем версию Gradle до совместимой с Java 17..."
-          ./gradlew wrapper --gradle-version 7.6.3
-
           chmod +x gradlew
           ./gradlew assembleDebug --stacktrace
 
